@@ -1,0 +1,14 @@
+{
+	"basemap": "/data/basemap-europe.pmtiles",
+	"layers": {
+		"smod_2019": "/data/smod_2019_europe.pmtiles",
+		"hydrorivers": "/data/hydrorivers_eu.pmtiles",
+		"hydrolakes": "/data/hydrolakes_eu.pmtiles",
+		"coastline_10m": "/data/coastline_10m_eu.pmtiles"
+	},
+	"rasters": {
+		"worldcover_2020_tree": "/data/worldcover_2020_tree_eu.cog.tif"
+	},
+	"wind": "/data/airports_windroses.json",
+	"legends": "/legends/"
+} 
