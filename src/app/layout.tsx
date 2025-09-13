@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
 	title: "HavenMap — Find quieter ground",
 	description: "Input a city. Get safer nearby areas with transparent, map-based heuristics.",
+	icons: {
+		icon: "/favicon.ico",
+	},
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl, { LngLatBounds } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { CityQuery, Coordinates, ZoneSuggestion } from "@/lib/types";
+import { Protocol } from "pmtiles";
 
 type MapViewProps = {
 	origin: CityQuery;
@@ -11,9 +12,14 @@ type MapViewProps = {
 	focusedId?: string | null;
 };
 
+const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "https://demotiles.maplibre.org/style.json";
+
+type AddProtocol = (scheme: string, handler: (...args: unknown[]) => unknown) => void;
+
 export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const mapRef = useRef<maplibregl.Map | null>(null);
+	const pmtilesRegisteredRef = useRef<boolean>(false);
 
 	const points = useMemo(() => {
 		const arr: { id: string; name: string; coord: Coordinates; kind: "origin" | "suggestion" }[] = [
@@ -25,9 +31,25 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 
 	useEffect(() => {
 		if (!containerRef.current || typeof window === "undefined") return;
+
+		// Register pmtiles:// protocol once
+		if (!pmtilesRegisteredRef.current) {
+			try {
+				const protocol = new Protocol();
+				const anyMaplibre = maplibregl as unknown as { addProtocol?: AddProtocol };
+				if (typeof anyMaplibre.addProtocol === "function") {
+					const handler = (...args: unknown[]) => (protocol.tile as unknown as (...args: unknown[]) => unknown)(...args);
+					anyMaplibre.addProtocol("pmtiles", handler);
+					pmtilesRegisteredRef.current = true;
+				}
+			} catch {
+				// ignore if not available
+			}
+		}
+
 		const map = new maplibregl.Map({
 			container: containerRef.current,
-			style: "https://demotiles.maplibre.org/style.json",
+			style: MAP_STYLE_URL,
 			center: [origin.coordinates.lng, origin.coordinates.lat],
 			zoom: 7,
 			attributionControl: { compact: true },

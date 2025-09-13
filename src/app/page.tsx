@@ -38,6 +38,10 @@ export default function HomePage() {
 		} else {
 			setOrigin(DEFAULT_CITY);
 		}
+		// Auto-open map on desktop (sm and up)
+		if (window.innerWidth >= 640) {
+			setShowMap(true);
+		}
 	}, []);
 
 	const result = useMemo(() => {
