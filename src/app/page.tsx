@@ -38,7 +38,6 @@ export default function HomePage() {
 		} else {
 			setOrigin(DEFAULT_CITY);
 		}
-		// Auto-open map on desktop (sm and up)
 		if (window.innerWidth >= 640) {
 			setShowMap(true);
 		}
@@ -83,37 +82,36 @@ export default function HomePage() {
 	};
 
 	return (
-		<div className="min-h-dvh bg-white text-neutral-900">
-			<header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
-				<div className="mx-auto max-w-4xl px-4 py-3 flex items-center justify-between">
+		<div className="min-h-dvh">
+			<header className="sticky top-0 z-20 border-b border-white/10 bg-black/40 backdrop-blur">
+				<div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<span className="text-xl font-semibold tracking-tight">HavenMap</span>
-						<Badge variant="secondary" className="text-xs">Find quieter ground.</Badge>
+						<Badge variant="secondary" className="text-xs bg-white/10 text-white">Find quieter ground.</Badge>
 					</div>
 					<div className="flex items-center gap-4">
-						<Link href="/attribution" className="text-xs text-neutral-700 hover:underline">Attribution</Link>
-						<Badge variant="outline" className="text-xs">Educational tool. Not advice.</Badge>
+						<Link href="/attribution" className="text-xs text-white/70 hover:text-white">Attribution</Link>
+						<Badge variant="outline" className="text-xs border-white/20 text-white/80">Educational tool. Not advice.</Badge>
 					</div>
 				</div>
 			</header>
 
-			<main className="mx-auto max-w-4xl px-4 py-8">
+			<main className="mx-auto max-w-5xl px-4 py-10">
 				<section className="mb-6">
 					<SearchBar onSearch={onSearch} onUseLocation={onUseLocation} />
-					{loading && <div className="mt-2 text-sm text-neutral-600">Searching…</div>}
+					{loading && <div className="mt-2 text-sm text-white/70">Searching…</div>}
 				</section>
 
-				{/* Result card above the fold */}
 				<section className="mb-10">
-					<Card>
+					<Card className="bg-white/5 border-white/10">
 						<CardHeader>
-							<CardTitle className="flex items-center justify-between">
+							<CardTitle className="flex items-center justify-between text-white">
 								<span>
 									Risk near {result.origin.name}: {toRiskBand(result.riskAtOrigin.total)} ({Math.round(result.riskAtOrigin.total)}/100)
 								</span>
 								<Badge variant="destructive">{toRiskBand(result.riskAtOrigin.total)}</Badge>
 							</CardTitle>
-							<CardDescription>
+							<CardDescription className="text-white/70">
 								{result.riskAtOrigin.reasons.slice(0, 3).map((r, i) => (
 									<span key={i} className="mr-3">• {r}</span>
 								))}
@@ -122,15 +120,15 @@ export default function HomePage() {
 						<CardContent>
 							<div className="space-y-6">
 								<div>
-									<h3 className="mb-2 font-medium">Safer nearby</h3>
+									<h3 className="mb-2 font-medium text-white">Safer nearby</h3>
 									<ul className="space-y-2">
 										{result.suggestions.map((s) => (
 											<li key={s.id} className="flex items-center justify-between gap-4">
 												<div className="text-sm">
-													<div className="font-medium">
+													<div className="font-medium text-white">
 														{s.name} ({Math.round(s.distanceKm)} km)
 													</div>
-													<div className="text-neutral-600">
+													<div className="text-white/70">
 														{s.rationale} • Lower risk vs your city ({Math.round(s.riskDelta)} pts)
 													</div>
 												</div>
@@ -145,11 +143,11 @@ export default function HomePage() {
 									</ul>
 								</div>
 
-								<Separator />
+								<Separator className="bg-white/10" />
 
 								<div>
-									<h3 className="mb-2 font-medium">Mini-checklist</h3>
-									<ul className="text-sm text-neutral-700 list-disc pl-5">
+									<h3 className="mb-2 font-medium text-white">Mini-checklist</h3>
+									<ul className="text-sm text-white/80 list-disc pl-5">
 										{result.printChecklist.map((c, i) => (
 											<li key={i}>{c}</li>
 										))}
@@ -161,22 +159,22 @@ export default function HomePage() {
 				</section>
 
 				<section className="mb-6">
-					<Button variant="ghost" onClick={() => setShowMap((s) => !s)} className="px-0">
+					<Button variant="ghost" onClick={() => setShowMap((s) => !s)} className="px-0 text-white">
 						{showMap ? "Hide map" : "Show map"}
 					</Button>
-					<div className={`mt-3 overflow-hidden rounded-md border ${showMap ? "block" : "hidden sm:block"}`}>
+					<div className={`mt-3 overflow-hidden rounded-md border border-white/10 ${showMap ? "block" : "hidden sm:block"}`}>
 						{showMap ? (
 							<MapView origin={result.origin} suggestions={result.suggestions} focusedId={focusedId} />
 						) : (
-							<div className="h-[360px] w-full bg-neutral-50 grid place-items-center text-neutral-500">
+							<div className="h-[420px] w-full grid place-items-center text-white/60 bg-white/5">
 								<span>Map placeholder (MapLibre to be wired)</span>
 							</div>
 						)}
 					</div>
 				</section>
 
-				<section className="mb-12 text-sm text-neutral-600">
-					<p className="mb-2 font-medium">Copy kit</p>
+				<section className="mb-12 text-sm text-white/70">
+					<p className="mb-2 font-medium text-white">Copy kit</p>
 					<ul className="list-disc pl-5 space-y-1">
 						<li>HavenMap — hints at life after the blast (subtle).</li>
 						<li>Educational model. Not real-time. Not safety advice.</li>

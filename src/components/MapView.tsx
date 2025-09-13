@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import maplibregl, { LngLatBounds } from "maplibre-gl";
+import maplibregl, { LngLatBounds, NavigationControl, ScaleControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { CityQuery, Coordinates, ZoneSuggestion } from "@/lib/types";
 import { Protocol } from "pmtiles";
@@ -54,6 +54,8 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 			zoom: 7,
 			attributionControl: { compact: true },
 		});
+		map.addControl(new NavigationControl({ visualizePitch: true }), "top-right");
+		map.addControl(new ScaleControl({ unit: "metric" }));
 		mapRef.current = map;
 
 		// Add markers
@@ -64,7 +66,7 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 			el.style.borderRadius = "9999px";
 			el.style.border = "2px solid white";
 			el.style.boxShadow = "0 0 0 1px rgba(0,0,0,0.2)";
-			el.style.backgroundColor = p.kind === "origin" ? "#111827" : "#2563eb";
+			el.style.backgroundColor = p.kind === "origin" ? "#f43f5e" : "#22d3ee";
 			new maplibregl.Marker({ element: el })
 				.setLngLat([p.coord.lng, p.coord.lat])
 				.setPopup(new maplibregl.Popup({ offset: 12 }).setText(p.name))
@@ -93,5 +95,10 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 		map.flyTo({ center: [target.centroid.lng, target.centroid.lat], zoom: 10 });
 	}, [focusedId, suggestions]);
 
-	return <div ref={containerRef} className="h-[360px] w-full" />;
+	return (
+		<div className="relative">
+			<div ref={containerRef} className="h-[420px] w-full rounded-md overflow-hidden" />
+			<div className="pointer-events-none absolute inset-0 rounded-md shadow-[inset_0_-120px_160px_rgba(0,0,0,0.35)]" />
+		</div>
+	);
 } 
