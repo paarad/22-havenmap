@@ -77,8 +77,10 @@ export function rankSaferNearby(
 	const suggestions = candidates.map((c) => {
 		const distanceKm = haversineKm(origin.coordinates, c.centroid);
 		const resource = computeResourceScore(c.centroid);
-		const candidateRiskTotal = Math.max(0, originRisk.total - 25 + Math.random() * 10); // placeholder safer-ish
-		const riskDelta = clamp(candidateRiskTotal - originRisk.total, -80, 20);
+		// Safer total nudged by distance: closer generally small delta, further can be larger
+		const baseDelta = originRisk.band === "High" ? -30 : originRisk.band === "Medium" ? -22 : -16;
+		const distanceFactor = Math.max(-12, -distanceKm / 6); // at 12km ≈ -2, at 60km ≈ -10
+		const riskDelta = clamp(baseDelta + distanceFactor + (Math.random() * 4 - 2), -80, 0);
 		const rationale = `Rural feel; ${resource.reasons[0].toLowerCase()}; ${resource.reasons[1].toLowerCase()}`;
 		return {
 			id: c.id,
@@ -105,16 +107,35 @@ export function rankSaferNearby(
 
 export function buildResultSet(origin: CityQuery): ResultSet {
 	const riskAtOrigin = computeRiskScore(origin);
-	// Placeholder candidates in a 50–300 km ring, hard-coded nearby offsets
+	const band = riskAtOrigin.band;
+	// Generate closer candidates for Low/Medium risk origins; a bit wider if High
 	const base = origin.coordinates;
-	const km = (dLat: number, dLng: number): Coordinates => ({ lat: base.lat + dLat, lng: base.lng + dLng });
-	const candidates = [
-		{ id: "1", name: "North Ridge", centroid: km(0.8, 0.0), roadAccessProxy: 6 },
-		{ id: "2", name: "River Bend", centroid: km(0.4, 0.7), roadAccessProxy: 7 },
-		{ id: "3", name: "Pine Valley", centroid: km(-0.9, 0.2), roadAccessProxy: 5 },
-		{ id: "4", name: "Quiet Heath", centroid: km(0.6, -0.6), roadAccessProxy: 4 },
-		{ id: "5", name: "Lakeview Spur", centroid: km(-0.5, -0.7), roadAccessProxy: 6 },
-	];
+	const kmOffset = (kmNorth: number, kmEast: number): Coordinates => ({
+		lat: base.lat + kmNorth / 111,
+		lng: base.lng + (kmEast / 111) / Math.cos((base.lat * Math.PI) / 180),
+	});
+	const ring: Array<[number, number, string, number]> =
+		band === "High"
+			? [
+				[20, 0, "North Ridge", 6],
+				[15, 25, "River Bend", 7],
+				[-22, 10, "Pine Valley", 5],
+				[18, -18, "Quiet Heath", 4],
+				[-14, -20, "Lakeview Spur", 6],
+			]
+			: [
+				[8, 0, "North Ridge", 6],
+				[10, 12, "River Bend", 7],
+				[-16, 4, "Pine Valley", 5],
+				[14, -10, "Quiet Heath", 4],
+				[-12, -14, "Lakeview Spur", 6],
+			];
+	const candidates = ring.map(([nKm, eKm, name, access], idx) => ({
+		id: String(idx + 1),
+		name,
+		centroid: kmOffset(nKm, eKm),
+		roadAccessProxy: access,
+	}));
 	const suggestions = rankSaferNearby(origin, candidates, riskAtOrigin);
 	const checklist = ["Water nearby", "Fuel/wood source", "Lower density access road"];
 	return { origin, riskAtOrigin, suggestions, printChecklist: checklist };

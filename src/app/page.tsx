@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { buildResultSet, toRiskBand } from "@/lib/heuristics";
-import { CityQuery } from "@/lib/types";
+import { CityQuery, ZoneSuggestion } from "@/lib/types";
 import { SearchBar } from "@/components/SearchBar";
 import { geocodeCity } from "@/lib/geocode";
 import { MapView } from "@/components/MapView";
@@ -23,6 +23,7 @@ export default function HomePage() {
 	const [showMap, setShowMap] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [focusedId, setFocusedId] = useState<string | null>(null);
+	const [refined, setRefined] = useState<ZoneSuggestion[] | null>(null);
 
 	useEffect(() => {
 		const url = new URL(window.location.href);
@@ -47,6 +48,35 @@ export default function HomePage() {
 		const o = origin ?? DEFAULT_CITY;
 		return buildResultSet(o);
 	}, [origin]);
+
+	useEffect(() => {
+		setRefined(null);
+		const controller = new AbortController();
+		const tid = setTimeout(() => controller.abort(), 2000);
+		const run = async () => {
+			try {
+				const res = await fetch("/api/refine", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						origin: { name: result.origin.name, riskBand: toRiskBand(result.riskAtOrigin.total) },
+						suggestions: result.suggestions.map((s) => ({ id: s.id, name: s.name, distanceKm: Math.round(s.distanceKm), riskDelta: Math.round(s.riskDelta), rationale: s.rationale })),
+					}),
+					signal: controller.signal,
+				});
+				clearTimeout(tid);
+				if (!res.ok) return;
+				const data = (await res.json()) as { suggestions?: ZoneSuggestion[] };
+				if (data?.suggestions && Array.isArray(data.suggestions) && data.suggestions.length) {
+					setRefined(data.suggestions);
+				}
+			} catch {}
+		};
+		run();
+		return () => clearTimeout(tid);
+	}, [result.origin.name, result.riskAtOrigin.total, result.suggestions]);
+
+	const displaySuggestions = refined ?? result.suggestions;
 
 	const onSearch = async (q: string) => {
 		if (!q.trim()) return;
@@ -122,7 +152,7 @@ export default function HomePage() {
 								<div>
 									<h3 className="mb-2 font-medium text-white">Safer nearby</h3>
 									<ul className="space-y-2">
-										{result.suggestions.map((s) => (
+										{displaySuggestions.map((s) => (
 											<li key={s.id} className="flex items-center justify-between gap-4">
 												<div className="text-sm">
 													<div className="font-medium text-white">

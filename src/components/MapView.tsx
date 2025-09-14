@@ -12,7 +12,13 @@ type MapViewProps = {
 	focusedId?: string | null;
 };
 
-const MAP_STYLE_URL = process.env.NEXT_PUBLIC_MAP_STYLE_URL || "https://demotiles.maplibre.org/style.json";
+const MT_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+const ENV_STYLE = process.env.NEXT_PUBLIC_MAP_STYLE_URL;
+const FALLBACK_STYLE = "https://demotiles.maplibre.org/style.json";
+const DEFAULT_MT_LIGHT = MT_KEY
+	? `https://api.maptiler.com/maps/streets/style.json?key=${MT_KEY}`
+	: undefined;
+const MAP_STYLE_URL = ENV_STYLE || DEFAULT_MT_LIGHT || FALLBACK_STYLE;
 
 type AddProtocol = (scheme: string, handler: (...args: unknown[]) => unknown) => void;
 
@@ -98,7 +104,7 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 	return (
 		<div className="relative">
 			<div ref={containerRef} className="h-[420px] w-full rounded-md overflow-hidden" />
-			<div className="pointer-events-none absolute inset-0 rounded-md shadow-[inset_0_-120px_160px_rgba(0,0,0,0.35)]" />
+			<div className="pointer-events-none absolute inset-0 rounded-md shadow-[inset_0_-120px_160px_rgba(0,0,0,0.2)]" />
 		</div>
 	);
 } 
