@@ -8,7 +8,7 @@ import { Protocol } from "pmtiles";
 
 type MapViewProps = {
 	origin: CityQuery;
-	suggestions: ZoneSuggestion[];
+	suggestions: (ZoneSuggestion & { waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean })[];
 	focusedId?: string | null;
 };
 
@@ -28,9 +28,9 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 	const pmtilesRegisteredRef = useRef<boolean>(false);
 
 	const points = useMemo(() => {
-		const arr: { id: string; name: string; coord: Coordinates; kind: "origin" | "suggestion"; distanceKm?: number }[] = [
+		const arr: { id: string; name: string; coord: Coordinates; kind: "origin" | "suggestion"; distanceKm?: number; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean }[] = [
 			{ id: "origin", name: origin.name, coord: origin.coordinates, kind: "origin" },
-			...suggestions.map((s) => ({ id: s.id, name: s.name, coord: s.centroid, kind: "suggestion" as const, distanceKm: s.distanceKm })),
+			...suggestions.map((s) => ({ id: s.id, name: s.name, coord: s.centroid, kind: "suggestion" as const, distanceKm: s.distanceKm, waterKm: (s as any).waterKm, forestKm: (s as any).forestKm, hasWater: (s as any).hasWater, hasForest: (s as any).hasForest })),
 		];
 		return arr;
 	}, [origin, suggestions]);
@@ -48,9 +48,7 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 					anyMaplibre.addProtocol("pmtiles", handler);
 					pmtilesRegisteredRef.current = true;
 				}
-			} catch {
-				// ignore if not available
-			}
+			} catch {}
 		}
 
 		const map = new maplibregl.Map({
@@ -64,7 +62,6 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 		map.addControl(new ScaleControl({ unit: "metric" }));
 		mapRef.current = map;
 
-		// Add markers
 		points.forEach((p) => {
 			const el = document.createElement("div");
 			el.style.width = p.kind === "origin" ? "14px" : "10px";
@@ -73,14 +70,20 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 			el.style.border = "2px solid white";
 			el.style.boxShadow = "0 0 0 1px rgba(0,0,0,0.2)";
 			el.style.backgroundColor = p.kind === "origin" ? "#f43f5e" : "#22d3ee";
-			const html = p.kind === "origin" ? `<div style="font-weight:600">${p.name}</div>` : `<div style="font-weight:600">${p.name}</div><div style="opacity:0.75">~${p.distanceKm ?? ""} km</div>`;
+			const tags: string[] = [];
+			if (p.hasWater) tags.push("water");
+			if (p.hasForest) tags.push("forest");
+			// naive coast proxy: water very near
+			if (typeof p.waterKm === "number" && p.waterKm <= 2) tags.push("fish");
+			const tagHtml = tags.length ? `<div class="hm-tags">${tags.map((t) => `<span class="hm-tag">${t}</span>`).join("")}</div>` : "";
+			const metaHtml = p.kind === "origin" ? "" : `<div style="opacity:.75">~${p.distanceKm ?? ""} km${typeof p.waterKm === "number" ? ` • water ~${Math.round(p.waterKm)} km` : ""}${typeof p.forestKm === "number" ? ` • forest ~${Math.round(p.forestKm)} km` : ""}</div>`;
+			const html = p.kind === "origin" ? `<div style="font-weight:600">${p.name}</div>` : `<div style="font-weight:600">${p.name}</div>${metaHtml}${tagHtml}`;
 			new maplibregl.Marker({ element: el })
 				.setLngLat([p.coord.lng, p.coord.lat])
 				.setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(html))
 				.addTo(map);
 		});
 
-		// Fit bounds
 		const bounds = new LngLatBounds();
 		points.forEach((p) => bounds.extend([p.coord.lng, p.coord.lat] as [number, number]));
 		if (points.length > 1) {

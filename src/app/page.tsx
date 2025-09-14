@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { buildResultSet, toRiskBand } from "@/lib/heuristics";
-import { CityQuery, ZoneSuggestion } from "@/lib/types";
+import { CityQuery } from "@/lib/types";
 import { SearchBar } from "@/components/SearchBar";
 import { geocodeCity } from "@/lib/geocode";
 import { MapView } from "@/components/MapView";
@@ -19,9 +19,9 @@ const QUICK_CITIES: Array<CityQuery> = [
 	{ name: "Milan", coordinates: { lat: 45.4642, lng: 9.19 } },
 ];
 
-type Candidate = { id: string; name: string; lat: number; lng: number; distanceKm: number; rationale: string };
+type Candidate = { id: string; name: string; lat: number; lng: number; distanceKm: number; rationale: string; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean };
 
-type DisplaySuggestion = { id: string; name: string; lat: number; lng: number; distanceKm: number; riskDelta: number; rationale: string };
+type DisplaySuggestion = { id: string; name: string; lat: number; lng: number; distanceKm: number; riskDelta: number; rationale: string; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean };
 
 export default function HomePage() {
 	const [origin, setOrigin] = useState<CityQuery | null>(null);
@@ -111,19 +111,19 @@ export default function HomePage() {
 		return () => clearTimeout(tid);
 	}, [JSON.stringify(candidates), result?.origin.name, result?.riskAtOrigin.total]);
 
-	// Merge refined or candidates with coordinates; limit to 6
+	// Merge refined or candidates with coordinates; limit to 6 and carry feature flags
 	const displaySuggestions: DisplaySuggestion[] = useMemo(() => {
 		if (refined && refined.length) {
 			const merged = refined
 				.map((r) => {
 					const base = candidatesById.get(r.id);
 					if (!base) return null;
-					return { id: r.id, name: r.name, lat: base.lat, lng: base.lng, distanceKm: r.distanceKm, riskDelta: r.riskDelta, rationale: r.rationale } as DisplaySuggestion;
+					return { id: r.id, name: r.name, lat: base.lat, lng: base.lng, distanceKm: r.distanceKm, riskDelta: r.riskDelta, rationale: r.rationale, waterKm: base.waterKm, forestKm: base.forestKm, hasWater: base.hasWater, hasForest: base.hasForest } as DisplaySuggestion;
 				})
 				.filter(Boolean) as DisplaySuggestion[];
 			return merged.slice(0, 6);
 		}
-		const baseList = (candidates ?? []).map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, distanceKm: c.distanceKm, riskDelta: Math.round(-18 + Math.random() * 6), rationale: c.rationale } as DisplaySuggestion));
+		const baseList = (candidates ?? []).map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, distanceKm: c.distanceKm, riskDelta: Math.round(-18 + Math.random() * 6), rationale: c.rationale, waterKm: c.waterKm, forestKm: c.forestKm, hasWater: c.hasWater, hasForest: c.hasForest } as DisplaySuggestion));
 		return baseList.slice(0, 6);
 	}, [refined, candidatesById, candidates]);
 
@@ -277,7 +277,7 @@ export default function HomePage() {
 								{showMap ? (
 									<MapView
 										origin={result.origin}
-										suggestions={displaySuggestions.map((d) => ({ id: d.id, name: d.name, centroid: { lat: d.lat, lng: d.lng }, distanceKm: d.distanceKm, riskDelta: d.riskDelta, resourceScore: 0, rationale: d.rationale })) as any}
+										suggestions={displaySuggestions.map((d) => ({ id: d.id, name: d.name, centroid: { lat: d.lat, lng: d.lng }, distanceKm: d.distanceKm, riskDelta: d.riskDelta, resourceScore: 0, rationale: d.rationale, waterKm: d.waterKm, forestKm: d.forestKm, hasWater: d.hasWater, hasForest: d.hasForest })) as any}
 										focusedId={focusedId}
 									/>
 								) : (
