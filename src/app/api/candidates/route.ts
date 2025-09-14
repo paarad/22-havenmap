@@ -22,6 +22,7 @@ type Candidate = {
 	population?: number;
 	bearingDeg?: number;
 	score?: number;
+	riskDelta?: number;
 };
 
 type OverpassElement = {
@@ -139,13 +140,15 @@ export async function POST(req: NextRequest) {
 				const placePenalty = c.place === "town" ? -4 : c.place === "village" ? 0 : 2;
 				const popPenalty = c.population ? (c.population > 20000 ? -6 : c.population > 5000 ? -3 : c.population > 1500 ? -1 : 0) : 0;
 				const score = waterScore + forestScore + distScore + placePenalty + popPenalty;
+				// Deterministic relative risk improvement based on score; clamp to [-40, -8]
+				const riskDelta = -Math.min(40, Math.max(8, 10 + Math.round(score)));
 				const parts: string[] = [];
 				if (typeof waterKm === "number") parts.push(`water ~${Math.round(waterKm)} km`);
 				if (typeof forestKm === "number") parts.push(`forest ~${Math.round(forestKm)} km`);
 				if (c.population) parts.push(`pop ~${Math.round(c.population / 100) / 10}k`);
 				parts.push(`${Math.round(c.distanceKm)} km from city`);
 				const rationale = parts.join(" • ");
-				return { ...c, rationale, waterKm, forestKm, hasRiver, hasLake, hasWater, hasForest, score };
+				return { ...c, rationale, waterKm, forestKm, hasRiver, hasLake, hasWater, hasForest, score, riskDelta };
 			});
 
 		// Diversify by bearing (8 bins), greedy pick top by score

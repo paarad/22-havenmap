@@ -19,7 +19,7 @@ const QUICK_CITIES: Array<CityQuery> = [
 	{ name: "Milan", coordinates: { lat: 45.4642, lng: 9.19 } },
 ];
 
-type Candidate = { id: string; name: string; lat: number; lng: number; distanceKm: number; rationale: string; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean };
+type Candidate = { id: string; name: string; lat: number; lng: number; distanceKm: number; rationale: string; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean; riskDelta?: number };
 
 type DisplaySuggestion = { id: string; name: string; lat: number; lng: number; distanceKm: number; riskDelta: number; rationale: string; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean };
 
@@ -28,10 +28,8 @@ export default function HomePage() {
 	const [showMap, setShowMap] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [focusedId, setFocusedId] = useState<string | null>(null);
-	const [aiUsed, setAiUsed] = useState<boolean>(false);
 
 	const [candidates, setCandidates] = useState<Candidate[] | null>(null);
-	const [refined, setRefined] = useState<Array<{ id: string; name: string; distanceKm: number; riskDelta: number; rationale: string }> | null>(null);
 
 	// On load: if URL has ?q=, geocode it; otherwise, stay on hero with no default
 	useEffect(() => {
@@ -74,58 +72,11 @@ export default function HomePage() {
 		})();
 	}, [origin?.coordinates.lat, origin?.coordinates.lng]);
 
-	// Map of candidates by id for coordinate lookup
-	const candidatesById = useMemo(() => {
-		const map = new Map<string, Candidate>();
-		(candidates ?? []).forEach((c) => map.set(c.id, c));
-		return map;
-	}, [candidates]);
-
-	// Ask AI to refine once we have candidates and risk
-	useEffect(() => {
-		if (!result || !candidates) return;
-		setRefined(null);
-		setAiUsed(false);
-		const controller = new AbortController();
-		const tid = setTimeout(() => controller.abort(), 2000);
-		void (async () => {
-			try {
-				const res = await fetch("/api/refine", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						origin: { name: result.origin.name, riskBand: toRiskBand(result.riskAtOrigin.total) },
-						suggestions: candidates.map((s) => ({ id: s.id, name: s.name, distanceKm: Math.round(s.distanceKm), riskDelta: Math.round(-20 + Math.random() * 6), rationale: s.rationale })),
-					}),
-					signal: controller.signal,
-				});
-				clearTimeout(tid);
-				if (!res.ok) return;
-				const data = (await res.json()) as { suggestions?: Array<{ id: string; name: string; distanceKm: number; riskDelta: number; rationale: string }> };
-				if (data?.suggestions && Array.isArray(data.suggestions) && data.suggestions.length) {
-					setRefined(data.suggestions);
-					setAiUsed(true);
-				}
-			} catch {}
-		})();
-		return () => clearTimeout(tid);
-	}, [JSON.stringify(candidates), result?.origin.name, result?.riskAtOrigin.total]);
-
-	// Merge refined or candidates with coordinates; limit to 6 and carry feature flags
+	// Merge candidates with coordinates; limit to 6 and carry feature flags
 	const displaySuggestions: DisplaySuggestion[] = useMemo(() => {
-		if (refined && refined.length) {
-			const merged = refined
-				.map((r) => {
-					const base = candidatesById.get(r.id);
-					if (!base) return null;
-					return { id: r.id, name: r.name, lat: base.lat, lng: base.lng, distanceKm: r.distanceKm, riskDelta: r.riskDelta, rationale: r.rationale, waterKm: base.waterKm, forestKm: base.forestKm, hasWater: base.hasWater, hasForest: base.hasForest } as DisplaySuggestion;
-				})
-				.filter(Boolean) as DisplaySuggestion[];
-			return merged.slice(0, 6);
-		}
-		const baseList = (candidates ?? []).map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, distanceKm: c.distanceKm, riskDelta: Math.round(-18 + Math.random() * 6), rationale: c.rationale, waterKm: c.waterKm, forestKm: c.forestKm, hasWater: c.hasWater, hasForest: c.hasForest } as DisplaySuggestion));
+		const baseList = (candidates ?? []).map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, distanceKm: c.distanceKm, riskDelta: Math.round(c.riskDelta ?? -12), rationale: c.rationale, waterKm: c.waterKm, forestKm: c.forestKm, hasWater: c.hasWater, hasForest: c.hasForest } as DisplaySuggestion));
 		return baseList.slice(0, 6);
-	}, [refined, candidatesById, candidates]);
+	}, [candidates]);
 
 	const onSearch = async (q: string) => {
 		if (!q.trim()) return;
@@ -220,7 +171,6 @@ export default function HomePage() {
 											Risk near {result.origin.name}: {toRiskBand(result.riskAtOrigin.total)} ({Math.round(result.riskAtOrigin.total)}/100)
 										</span>
 										<div className="flex items-center gap-2">
-											{aiUsed && <Badge variant="secondary" className="text-xs bg-white/10 text-white">AI-refined</Badge>}
 											<Badge variant="destructive">{toRiskBand(result.riskAtOrigin.total)}</Badge>
 										</div>
 									</CardTitle>
