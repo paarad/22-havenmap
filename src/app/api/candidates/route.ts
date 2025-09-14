@@ -24,6 +24,15 @@ type Candidate = {
 	score?: number;
 };
 
+type OverpassElement = {
+	id: number | string;
+	type: "node" | "way" | "relation";
+	lat?: number;
+	lon?: number;
+	center?: { lat: number; lon: number };
+	tags?: Record<string, string>;
+};
+
 export async function POST(req: NextRequest) {
 	try {
 		const { origin } = (await req.json()) as { origin: Origin };
@@ -56,7 +65,7 @@ export async function POST(req: NextRequest) {
 			body: new URLSearchParams({ data: overpass }),
 		});
 		if (!res.ok) return NextResponse.json({ candidates: [] }, { status: 200 });
-		const data = (await res.json()) as { elements?: any[] };
+		const data = (await res.json()) as { elements?: OverpassElement[] };
 		const elements = data.elements || [];
 		const places = elements.filter((e) => e.type === "node" && e.tags && e.tags.place);
 		const rivers = elements.filter((e) => e.tags?.waterway === "river");
@@ -80,7 +89,7 @@ export async function POST(req: NextRequest) {
 				const pop = p.tags?.population ? Number(p.tags.population) : undefined;
 				return {
 					id: String(p.id),
-					name: p.tags?.name || p.tags?.["name:en"] || p.tags?.place || "Locality",
+					name: p.tags?.name || p.tags?.["name:en"] || (p.tags as Record<string, string>)?.place || "Locality",
 					lat: plat,
 					lng: plon,
 					distanceKm,
@@ -92,7 +101,7 @@ export async function POST(req: NextRequest) {
 			})
 			.filter(Boolean) as Candidate[];
 
-		const nearestDistance = (arr: any[], lat0: number, lon0: number): number | null => {
+		const nearestDistance = (arr: OverpassElement[], lat0: number, lon0: number): number | null => {
 			let best: number | null = null;
 			for (const f of arr) {
 				const flat = f.lat ?? f.center?.lat;
@@ -120,12 +129,12 @@ export async function POST(req: NextRequest) {
 				const lakeKm = nearestDistance(lakes, c.lat, c.lng) ?? undefined;
 				const forestKm = nearestDistance(forests, c.lat, c.lng) ?? undefined;
 				const waterKm = Math.min(riverKm ?? Infinity, lakeKm ?? Infinity);
-				const hasRiver = typeof riverKm === "number" && riverKm <= 5;
-				const hasLake = typeof lakeKm === "number" && lakeKm <= 3;
-				const hasWater = (hasRiver || hasLake) || (typeof waterKm === "number" && waterKm <= 5);
-				const hasForest = typeof forestKm === "number" && forestKm <= 10;
-				const waterScore = typeof waterKm === "number" ? (waterKm <= 1.5 ? 20 : waterKm <= 3 ? 12 : waterKm <= 5 ? 6 : 0) : 0;
-				const forestScore = typeof forestKm === "number" ? (forestKm <= 5 ? 10 : forestKm <= 10 ? 6 : 0) : 0;
+				const hasRiver = typeof riverKm === "number" && riverKm <= 2; // was 5
+				const hasLake = typeof lakeKm === "number" && lakeKm <= 1.5; // was 3
+				const hasWater = (hasRiver || hasLake) || (typeof waterKm === "number" && waterKm <= 2); // was 5
+				const hasForest = typeof forestKm === "number" && forestKm <= 5; // was 10
+				const waterScore = typeof waterKm === "number" ? (waterKm <= 1 ? 20 : waterKm <= 2 ? 12 : waterKm <= 3 ? 6 : 0) : 0;
+				const forestScore = typeof forestKm === "number" ? (forestKm <= 3 ? 10 : forestKm <= 5 ? 6 : 0) : 0;
 				const distScore = scoreDistance(c.distanceKm);
 				const placePenalty = c.place === "town" ? -4 : c.place === "village" ? 0 : 2;
 				const popPenalty = c.population ? (c.population > 20000 ? -6 : c.population > 5000 ? -3 : c.population > 1500 ? -1 : 0) : 0;

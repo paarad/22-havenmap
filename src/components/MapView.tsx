@@ -30,7 +30,7 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 	const points = useMemo(() => {
 		const arr: { id: string; name: string; coord: Coordinates; kind: "origin" | "suggestion"; distanceKm?: number; waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean }[] = [
 			{ id: "origin", name: origin.name, coord: origin.coordinates, kind: "origin" },
-			...suggestions.map((s) => ({ id: s.id, name: s.name, coord: s.centroid, kind: "suggestion" as const, distanceKm: s.distanceKm, waterKm: (s as any).waterKm, forestKm: (s as any).forestKm, hasWater: (s as any).hasWater, hasForest: (s as any).hasForest })),
+			...suggestions.map((s) => ({ id: s.id, name: s.name, coord: s.centroid, kind: "suggestion" as const, distanceKm: s.distanceKm, waterKm: s.waterKm, forestKm: s.forestKm, hasWater: s.hasWater, hasForest: s.hasForest })),
 		];
 		return arr;
 	}, [origin, suggestions]);

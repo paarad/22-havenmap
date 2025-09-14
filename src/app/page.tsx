@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { buildResultSet, toRiskBand } from "@/lib/heuristics";
-import { CityQuery } from "@/lib/types";
+import { CityQuery, ZoneSuggestion } from "@/lib/types";
 import { SearchBar } from "@/components/SearchBar";
 import { geocodeCity } from "@/lib/geocode";
 import { MapView } from "@/components/MapView";
@@ -277,7 +277,7 @@ export default function HomePage() {
 								{showMap ? (
 									<MapView
 										origin={result.origin}
-										suggestions={displaySuggestions.map((d) => ({ id: d.id, name: d.name, centroid: { lat: d.lat, lng: d.lng }, distanceKm: d.distanceKm, riskDelta: d.riskDelta, resourceScore: 0, rationale: d.rationale, waterKm: d.waterKm, forestKm: d.forestKm, hasWater: d.hasWater, hasForest: d.hasForest })) as any}
+										suggestions={displaySuggestions.map((d) => ({ id: d.id, name: d.name, centroid: { lat: d.lat, lng: d.lng }, distanceKm: d.distanceKm, riskDelta: d.riskDelta, resourceScore: 0, rationale: d.rationale, waterKm: d.waterKm, forestKm: d.forestKm, hasWater: d.hasWater, hasForest: d.hasForest })) as (ZoneSuggestion & { waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean })[]}
 										focusedId={focusedId}
 									/>
 								) : (
