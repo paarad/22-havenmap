@@ -78,7 +78,7 @@ export default function HomePage() {
 	// Merge candidates with coordinates; limit to 6 and carry feature flags
 	const displaySuggestions: DisplaySuggestion[] = useMemo(() => {
 		const baseList = (candidates ?? []).map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, distanceKm: c.distanceKm, riskDelta: Math.round(c.riskDelta ?? -12), rationale: c.rationale, waterKm: c.waterKm, forestKm: c.forestKm, hasWater: c.hasWater, hasForest: c.hasForest } as DisplaySuggestion));
-		return baseList.slice(0, 6);
+		return baseList.slice(0, 5);
 	}, [candidates]);
 
 	const onSearch = async (q: string) => {

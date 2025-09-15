@@ -163,14 +163,14 @@ export async function POST(req: NextRequest) {
 			if (count >= 1) continue; // at most 1 per bin initially
 			picked.push(c);
 			bins.set(bin, count + 1);
-			if (picked.length >= 6) break;
+			if (picked.length >= 5) break;
 		}
-		// If less than 6 (sparse area), fill remaining by score
-		if (picked.length < 6) {
+		// If less than 5 (sparse area), fill remaining by score
+		if (picked.length < 5) {
 			for (const c of byScore) {
 				if (picked.find((p) => p.id === c.id)) continue;
 				picked.push(c);
-				if (picked.length >= 6) break;
+				if (picked.length >= 5) break;
 			}
 		}
 
