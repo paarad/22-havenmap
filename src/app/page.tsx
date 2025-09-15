@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { buildResultSet, toRiskBand } from "@/lib/heuristics";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CityQuery, ZoneSuggestion } from "@/lib/types";
 import { SearchBar } from "@/components/SearchBar";
 import { geocodeCity } from "@/lib/geocode";
@@ -47,12 +44,6 @@ export default function HomePage() {
 		}
 	}, []);
 
-	// Build a basic result (for risk score) once we have origin
-	const result = useMemo(() => {
-		if (!origin) return null;
-		return buildResultSet(origin);
-	}, [origin]);
-
 	// Fetch real candidates near origin
 	useEffect(() => {
 		if (!origin) return;
@@ -75,7 +66,7 @@ export default function HomePage() {
 		})();
 	}, [origin?.coordinates.lat, origin?.coordinates.lng]);
 
-	// Merge candidates with coordinates; limit to 6 and carry feature flags
+	// Merge candidates with coordinates; limit to 5 and carry feature flags
 	const displaySuggestions: DisplaySuggestion[] = useMemo(() => {
 		const baseList = (candidates ?? []).map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, distanceKm: c.distanceKm, riskDelta: Math.round(c.riskDelta ?? -12), rationale: c.rationale, waterKm: c.waterKm, forestKm: c.forestKm, hasWater: c.hasWater, hasForest: c.hasForest } as DisplaySuggestion));
 		return baseList.slice(0, 5);
@@ -124,9 +115,7 @@ export default function HomePage() {
 						<Badge variant="secondary" className="text-xs bg-white/10 text-white">Find quieter ground.</Badge>
 					</div>
 					<div className="flex items-center gap-4">
-						<Link href="/attribution" className="text-xs text-white/70 hover:text-white">Attribution</Link>
 						<a href="https://en.wikipedia.org/wiki/Skynet_(Terminator)" target="_blank" rel="noopener noreferrer" className="text-xs text-white/60 hover:text-white/90">Skynet</a>
-						<Badge variant="outline" className="text-xs border-white/20 text-white/80">Educational tool. Not advice.</Badge>
 					</div>
 				</div>
 			</header>
@@ -160,7 +149,7 @@ export default function HomePage() {
 				)}
 
 				{/* When we have an origin, show results */}
-				{origin && result && (
+				{origin && (
 					<>
 						<section className="mb-6">
 							<SearchBar onSearch={onSearch} onUseLocation={onUseLocation} loading={loading} />
@@ -208,7 +197,7 @@ export default function HomePage() {
 							<div className={`mt-3 overflow-hidden rounded-md border border-white/10 ${showMap ? "block" : "hidden sm:block"}`}>
 								{showMap ? (
 									<MapView
-										origin={result.origin}
+										origin={origin}
 										suggestions={displaySuggestions.map((d) => ({ id: d.id, name: d.name, centroid: { lat: d.lat, lng: d.lng }, distanceKm: d.distanceKm, riskDelta: d.riskDelta, resourceScore: 0, rationale: d.rationale, waterKm: d.waterKm, forestKm: d.forestKm, hasWater: d.hasWater, hasForest: d.hasForest })) as (ZoneSuggestion & { waterKm?: number; forestKm?: number; hasWater?: boolean; hasForest?: boolean })[]}
 										focusedId={focusedId}
 									/>
