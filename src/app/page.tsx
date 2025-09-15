@@ -38,7 +38,6 @@ export default function HomePage() {
 		if (q) {
 			setLoading(true);
 			geocodeCity(q).then((feat) => {
-				setLoading(false);
 				if (feat) {
 					const next: CityQuery = { name: feat.name, coordinates: { lat: feat.lat, lng: feat.lng }, countryCode: feat.countryCode };
 					setOrigin(next);
@@ -58,6 +57,7 @@ export default function HomePage() {
 	useEffect(() => {
 		if (!origin) return;
 		setCandidates(null);
+		setLoading(true);
 		void (async () => {
 			try {
 				const res = await fetch("/api/candidates", {
@@ -69,6 +69,9 @@ export default function HomePage() {
 				const data = (await res.json()) as { candidates?: Candidate[] };
 				if (data?.candidates && Array.isArray(data.candidates)) setCandidates(data.candidates);
 			} catch {}
+			finally {
+				setLoading(false);
+			}
 		})();
 	}, [origin?.coordinates.lat, origin?.coordinates.lng]);
 
@@ -82,8 +85,7 @@ export default function HomePage() {
 		if (!q.trim()) return;
 		setLoading(true);
 		const feat = await geocodeCity(q);
-		setLoading(false);
-		if (!feat) return;
+		if (!feat) { setLoading(false); return; }
 		const next: CityQuery = { name: feat.name, coordinates: { lat: feat.lat, lng: feat.lng }, countryCode: feat.countryCode };
 		setOrigin(next);
 		localStorage.setItem("havenmap:lastQuery", JSON.stringify(next));
@@ -95,6 +97,7 @@ export default function HomePage() {
 
 	const onUseLocation = () => {
 		if (!navigator.geolocation) return;
+		setLoading(true);
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
 				const next: CityQuery = {
@@ -108,7 +111,7 @@ export default function HomePage() {
 				history.replaceState(null, "", url.toString());
 				setShowMap(window.innerWidth >= 640);
 			},
-			() => {}
+			() => { setLoading(false); }
 		);
 	};
 
