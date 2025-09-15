@@ -112,7 +112,7 @@ export default function HomePage() {
 				<div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<span className="text-xl font-semibold tracking-tight">HavenMap</span>
-						<Badge variant="secondary" className="text-xs bg-white/10 text-white">Find quieter ground.</Badge>
+						<Badge variant="secondary" className="text-xs bg-white/10 text-white">hints at life after the blast</Badge>
 					</div>
 					<div className="flex items-center gap-4">
 						<a href="https://en.wikipedia.org/wiki/Skynet_(Terminator)" target="_blank" rel="noopener noreferrer" className="text-xs text-white/60 hover:text-white/90">Skynet</a>
