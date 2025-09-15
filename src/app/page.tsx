@@ -167,23 +167,12 @@ export default function HomePage() {
 							<Card className="bg-white/5 border-white/10">
 								<CardHeader>
 									<CardTitle className="flex items-center justify-between text-white">
-										<span>
-											Risk near {result.origin.name}: {toRiskBand(result.riskAtOrigin.total)} ({Math.round(result.riskAtOrigin.total)}/100)
-										</span>
-										<div className="flex items-center gap-2">
-											<Badge variant="destructive">{toRiskBand(result.riskAtOrigin.total)}</Badge>
-										</div>
+										<span>Safer nearby</span>
 									</CardTitle>
-									<CardDescription className="text-white/70">
-										{result.riskAtOrigin.reasons.slice(0, 3).map((r, i) => (
-											<span key={i} className="mr-3">• {r}</span>
-										))}
-									</CardDescription>
 								</CardHeader>
 								<CardContent>
 									<div className="space-y-6">
 										<div>
-											<h3 className="mb-2 font-medium text-white">Safer nearby</h3>
 											<ul className="space-y-2">
 												{displaySuggestions.map((s) => (
 													<li key={s.id} className="flex items-center justify-between gap-4">
