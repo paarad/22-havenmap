@@ -76,7 +76,8 @@ export function MapView({ origin, suggestions, focusedId }: MapViewProps) {
 			// naive coast proxy: water very near
 			if (typeof p.waterKm === "number" && p.waterKm <= 2) tags.push("fish");
 			const tagHtml = tags.length ? `<div class="hm-tags">${tags.map((t) => `<span class="hm-tag">${t}</span>`).join("")}</div>` : "";
-			const metaHtml = p.kind === "origin" ? "" : `<div style="opacity:.75">~${p.distanceKm ?? ""} km${typeof p.waterKm === "number" ? ` • water ~${Math.round(p.waterKm)} km` : ""}${typeof p.forestKm === "number" ? ` • forest ~${Math.round(p.forestKm)} km` : ""}</div>`;
+			const fmt1 = (n?: number) => (typeof n === "number" ? Math.round(n * 10) / 10 : "");
+			const metaHtml = p.kind === "origin" ? "" : `<div style="opacity:.75">~${fmt1(p.distanceKm)} km${typeof p.waterKm === "number" ? ` • water ~${Math.round(p.waterKm)} km` : ""}${typeof p.forestKm === "number" ? ` • forest ~${Math.round(p.forestKm)} km` : ""}</div>`;
 			const html = p.kind === "origin" ? `<div style="font-weight:600">${p.name}</div>` : `<div style="font-weight:600">${p.name}</div>${metaHtml}${tagHtml}`;
 			new maplibregl.Marker({ element: el })
 				.setLngLat([p.coord.lng, p.coord.lat])
