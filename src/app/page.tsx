@@ -125,6 +125,7 @@ export default function HomePage() {
 					</div>
 					<div className="flex items-center gap-4">
 						<Link href="/attribution" className="text-xs text-white/70 hover:text-white">Attribution</Link>
+						<a href="https://en.wikipedia.org/wiki/Skynet_(Terminator)" target="_blank" rel="noopener noreferrer" className="text-xs text-white/60 hover:text-white/90">Skynet</a>
 						<Badge variant="outline" className="text-xs border-white/20 text-white/80">Educational tool. Not advice.</Badge>
 					</div>
 				</div>
