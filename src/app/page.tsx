@@ -192,17 +192,6 @@ export default function HomePage() {
 												))}
 											</ul>
 										</div>
-
-										<Separator className="bg-white/10" />
-
-										<div>
-											<h3 className="mb-2 font-medium text-white">Mini-checklist</h3>
-											<ul className="text-sm text-white/80 list-disc pl-5">
-												{result.printChecklist.map((c, i) => (
-													<li key={i}>{c}</li>
-												))}
-											</ul>
-										</div>
 									</div>
 								</CardContent>
 							</Card>
