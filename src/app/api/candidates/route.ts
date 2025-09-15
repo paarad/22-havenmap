@@ -129,7 +129,10 @@ export async function POST(req: NextRequest) {
 				const riverKm = nearestDistance(rivers, c.lat, c.lng) ?? undefined;
 				const lakeKm = nearestDistance(lakes, c.lat, c.lng) ?? undefined;
 				const forestKm = nearestDistance(forests, c.lat, c.lng) ?? undefined;
-				const waterKm = Math.min(riverKm ?? Infinity, lakeKm ?? Infinity);
+				const finite = (n?: number) => (typeof n === "number" && isFinite(n) ? n : undefined);
+				const r = finite(riverKm);
+				const l = finite(lakeKm);
+				const waterKm = r != null && l != null ? Math.min(r, l) : (r ?? l);
 				const hasRiver = typeof riverKm === "number" && riverKm <= 2; // was 5
 				const hasLake = typeof lakeKm === "number" && lakeKm <= 1.5; // was 3
 				const hasWater = (hasRiver || hasLake) || (typeof waterKm === "number" && waterKm <= 2); // was 5
@@ -145,7 +148,6 @@ export async function POST(req: NextRequest) {
 				const parts: string[] = [];
 				if (typeof waterKm === "number") parts.push(`water ~${Math.round(waterKm)} km`);
 				if (typeof forestKm === "number") parts.push(`forest ~${Math.round(forestKm)} km`);
-				if (c.population) parts.push(`pop ~${Math.round(c.population / 100) / 10}k`);
 				parts.push(`${Math.round(c.distanceKm)} km from city`);
 				const rationale = parts.join(" • ");
 				return { ...c, rationale, waterKm, forestKm, hasRiver, hasLake, hasWater, hasForest, score, riskDelta };

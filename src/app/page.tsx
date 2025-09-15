@@ -134,7 +134,7 @@ export default function HomePage() {
 						<h1 className="mb-2 text-2xl font-semibold text-white">Type your city</h1>
 						<p className="mb-4 text-white/70">HavenMap suggests safer nearby areas—evidence-based, calm, and clear.</p>
 						<div className="mb-4">
-							<SearchBar onSearch={onSearch} onUseLocation={onUseLocation} />
+							<SearchBar onSearch={onSearch} onUseLocation={onUseLocation} loading={loading} />
 							{loading && <div className="mt-2 text-sm text-white/70">Searching…</div>}
 						</div>
 						<div className="flex flex-wrap gap-2">
@@ -159,7 +159,7 @@ export default function HomePage() {
 				{origin && result && (
 					<>
 						<section className="mb-6">
-							<SearchBar onSearch={onSearch} onUseLocation={onUseLocation} />
+							<SearchBar onSearch={onSearch} onUseLocation={onUseLocation} loading={loading} />
 							{loading && <div className="mt-2 text-sm text-white/70">Searching…</div>}
 						</section>
 
